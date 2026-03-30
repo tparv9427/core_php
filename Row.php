@@ -81,8 +81,7 @@ class Row
     {
         if (isset($this->data[$this->primaryKey]) && !empty($this->data[$this->primaryKey])) {
             return $this->update();
-        }
-        else {
+        } else {
             return $this->insert();
         }
     }
