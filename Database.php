@@ -1,72 +1,54 @@
 <?php
- 
-class Database
-{
+
+class Database {
     public $server = "localhost";
     public $username = "root";
     public $password = "";
     public $dbname = "ecomdb";
-    private $conn;
- 
-    public function connect()
-    {
-        if ($this->conn) {
-            return $this;
-        }
+    public $port = "9000";
+    protected $conn = null;
 
-        $this->conn = mysqli_connect($this->server, $this->username, $this->password, $this->dbname, 9000);
- 
-        if (!$this->conn) {
-            die("Connection failed: " . mysqli_connect_error());
-        }
- 
+    public function connect() : Database {
+        $dsn = "mysql:host={$this->server};port={$this->port};dbname={$this->dbname}";
+        $this->conn = new PDO($dsn, $this->username, $this->password);
+        $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         return $this;
     }
- 
-    public function insert($query)
-    {
-        $this->connect();
-        if (mysqli_query($this->conn, $query)) {
-            $id = mysqli_insert_id($this->conn);
-            return $id ? $id : true;
-        }
-        return false;
+
+    public function getConnection() {
+        return $this->conn;
     }
- 
-    public function update($query)
-    {
-        $this->connect();
-        return mysqli_query($this->conn, $query) ? true : false;
+
+    public function insert(string $query) {
+        $this->conn->exec($query);
+        return $this->conn->lastInsertId();
     }
- 
-    public function fetchRow($query)
-    {
-        $this->connect();
-        $result = mysqli_query($this->conn, $query);
-        if ($result && mysqli_num_rows($result) > 0) {
-            return mysqli_fetch_assoc($result);
-        }
-        return false;
+
+    public function update(string $query) : bool {
+        return $this->conn->exec($query) !== false;
     }
- 
-    public function fetchAll($query)
-    {
-        $this->connect();
-        $result = mysqli_query($this->conn, $query);
-        if ($result) {
-            $rows = [];
-            while ($row = mysqli_fetch_assoc($result)) {
-                $rows[] = $row;
-            }
-            return $rows;
-        }
-        return false;
+
+    public function delete(string $query) : bool {
+        return $this->conn->exec($query) !== false;
     }
- 
-    public function delete($query)
-    {
-        $this->connect();
-        return mysqli_query($this->conn, $query) ? true : false;
+
+    public function fetchRow(string $query) {
+        $stmt = $this->conn->query($query);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function fetchAll(string $query) {
+        $stmt = $this->conn->query($query);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function fetchOne(string $query) {
+        $stmt = $this->conn->query($query);
+        return $stmt->fetchColumn();
+    }
+
+    public function fetchPair(string $query) {
+        $stmt = $this->conn->query($query);
+        return $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
     }
 }
-?>
